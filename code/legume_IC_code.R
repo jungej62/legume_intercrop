@@ -16,8 +16,7 @@ library(clipr)
 library(MuMIn)
 
 ###Read in csv of IC Agronomic Data and Organize####
-LEG<-read.csv("D:/My Drive/Mac/Students/Evelyn_Reiley/Legume_MS/LegDat_R_V11_JJ.csv")
-LEG<-read.csv("/Volumes/GoogleDrive/My Drive/Mac/Students/Evelyn_Reiley/Legume_MS/LegDat_R_V11_JJ.csv")
+LEG<-read.csv("/Users/junge037/Documents/Projects/legume_intercrop/data/LegDat_R_V11_JJ.csv")
 #LEG$Trt_code<-revalue(LEG$Trt_code, c("AlCl"="Alsike Clover", "BTre"="Birdsfoot Trefoil", "Alf"="Alfalfa", "CMV"="Canada Milk Vetch", "HiN"="90 kg ha", "MedN"="45 kg ha","None"="Control", "RdCl"="Red Clover", "WhCl"="White Clover"))
 #LEG$Trt_code<-factor(LEG$Trt_code, levels=c("Control", "45 kg ha", "90 kg ha", "Alsike Clover", "Birdsfoot Trefoil", "Alfalfa", "Canada Milk Vetch", "Red Clover", "White Clover"))
 LEG$Trt_code<-revalue(LEG$Trt_code, c("AlCl"="A. clover", "BTre"="B. trefoil", "Alf"="Alfalfa", "CMV"="C. milkvetch", "HiN"="90", "MedN"="45","None"="Control", "RdCl"="R. clover", "WhCl"="W. clover"))
@@ -38,19 +37,22 @@ LEG$fStandAge <- as.factor(LEG$Year-2016)
 LEG$StandAge <- LEG$Year-2016
 LEG$LRR<-LEG$Leg.bio.kg.ha/(LEG$Straw.kg.ha)#+LEG$Grain.kg.ha)
 
-SPdat<-subset(LEG, Location=="Saint Paul")
-Lamdat<-subset(LEG, Location=="Lamberton")
-Rosdat<-subset(LEG, Location=="Rosemount")
+#SPdat<-subset(LEG, Location=="Saint Paul")
+#Lamdat<-subset(LEG, Location=="Lamberton")
+#Rosdat<-subset(LEG, Location=="Rosemount")
 
 ###Summary SE to find actual means####
-realmean<-summarySE(subset(LEG, Trt_code!="X"), "Grain.kg.ha", c("fYear", "Trt_code", "Location"), na.rm=TRUE)
+#realmean<-summarySE(subset(LEG, Trt_code!="X"), "Grain.kg.ha", c("fYear", "Trt_code", "Location"), na.rm=TRUE)
 
 #Legume biomass / grain yield ####
+#This dataframe is to correlate 2017 legume biomass yields to grain yields in 
+#2017, 2018, and 2019. Make a dataframe of legume yields in 2017 and repeat it 
+#3 times so that the column is adjacent to grain yields in all years. 
 
 sumLRR2<-summarySE(subset(LEG, fYear=="2017"), "Leg.bio.kg.ha", c("Location", "fRep", "Trt_code"), na.rm=TRUE)
 sumLRR2<-rbind(sumLRR2, summarySE(subset(LEG, fYear=="2017"), "Leg.bio.kg.ha", c("Location", "fRep","Trt_code"), na.rm=TRUE))
 sumLRR2<-rbind(sumLRR2, summarySE(subset(LEG, fYear=="2017"), "Leg.bio.kg.ha", c("Location","fRep", "Trt_code"), na.rm=TRUE))
-sumLRR2$fYear<-as.factor(rep(c("2017","2018","2019"), each=106))
+sumLRR2$fYear<-as.factor(rep(c("2017","2018","2019"), each=108))
 sumLRR2$Grain.kg.ha<-summarySE(LEG, "Grain.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6]
 sumLRR2$NTrans<-summarySE(LEG, "NTrans", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6]
 sumLRR2$IWG_CN<-summarySE(LEG, "IWG_CN", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6]
@@ -150,6 +152,247 @@ ggplot(data=LEG, aes(y=Grain.kg.ha, x=NTrans)) +
         axis.title.y=element_text(size=10, color="black"),
         axis.line.x = element_blank(),
         axis.text.x=element_text(size=10, color='black'))
+
+#New 2024 - Relative yield calculations ####
+legry<-summarySE(LEG, "Grain.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,1:6]
+legry$Straw.kg.ha<-summarySE(LEG, "Straw.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6]
+legry$Leg.bio.kg.ha<-summarySE(LEG, "Leg.bio.kg.ha", c("fYear", "Location", "fRep", "Trt_code"), na.rm=TRUE)[,6]
+legry$g_c<-rep(summarySE(subset(LEG, Trt_code=="Control"), "Grain.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6], each=9)
+legry$s_c<-rep(summarySE(subset(LEG, Trt_code=="Control"), "Straw.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6], each=9)
+legry$g_45<-rep(summarySE(subset(LEG, Trt_code=="45"), "Grain.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6], each=9)
+legry$s_45<-rep(summarySE(subset(LEG, Trt_code=="45"), "Straw.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6], each=9)
+legry$g_90<-rep(summarySE(subset(LEG, Trt_code=="90"), "Grain.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6], each=9)
+legry$s_90<-rep(summarySE(subset(LEG, Trt_code=="90"), "Straw.kg.ha", c("fYear", "Location","fRep", "Trt_code"), na.rm=TRUE)[,6], each=9)
+legry$g_ry<-legry$Grain.kg.ha/legry$g_c
+legry$total_ry<-(legry$Grain.kg.ha+legry$Straw.kg.ha)/(legry$g_c+legry$s_c)
+#Add N transfer
+legry$NTrans<-summarySE(LEG, "NTrans", c("fYear", "Location", "fRep", "Trt_code"), na.rm=TRUE)[,6]
+#Add weeds
+legry$Weed.bio.kg.ha<-summarySE(LEG, "Weed.bio.kg.ha", c("fYear", "Location", "fRep", "Trt_code"), na.rm=TRUE)[,6]
+legry$HI<-(legry$Grain.kg.ha)/(legry$Grain.kg.ha+legry$Straw.kg.ha)
+#Plot relative yields - start with IWG total
+legry2<-summarySE(legry, "total_ry", c("fYear", "Location", "Trt_code"), na.rm=T)
+pps = position_dodge(width = .75)
+nolegs<-c("Control","45", "90")
+ggplot(data=subset(legry2, Trt_code!="Control"&Trt_code!="45"&Trt_code!="90"), 
+       aes(x=Trt_code, y=total_ry)) + 
+  geom_point(size=1.5)+#, stat="identity", position = pps) + 
+  facet_grid(Location~fYear) +
+  geom_hline(yintercept = 1, color="black")+
+  geom_errorbar(aes(ymin=total_ry-se, ymax=total_ry+se), width=0.2, position = pps) +
+  xlab("Treatment") +
+  ylab("Relative Yield")+
+  ylim(0,3.5) +
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        strip.text.y = element_text(size=10),
+        strip.background =element_rect(color="black", fill="white"),
+        panel.background=element_rect(color="black", fill="white"),
+        panel.border=element_blank(),
+        axis.text.y=element_text(size=10, color="black"),
+        axis.title.y=element_text(size=10, color="black"),
+        axis.line.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(size=10, angle=45,
+                                 hjust=0.95, color='black'))
+ggsave("RelativeYieldTotal.png", width=9, height=6, units="in", path="/Users/junge037/Documents/Projects/legume_intercrop/figures")
+#Plot relative yields IWG total by site
+ggplot(data=subset(legry2, Trt_code!="Control"&Trt_code!="45"&Trt_code!="90"&Location=="Lamberton"), 
+       aes(x=Trt_code, y=total_ry)) + 
+  geom_point(size=1.5)+#, stat="identity", position = pps) + 
+  facet_grid(~fYear) +
+  geom_hline(yintercept = 1, color="black")+
+  geom_errorbar(aes(ymin=total_ry-se, ymax=total_ry+se), width=0.2, position = pps) +
+  xlab("Treatment") +
+  ylab("Relative Yield")+
+  ylim(0,3.5) +
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        strip.text.y = element_text(size=10),
+        strip.background =element_rect(color="black", fill="white"),
+        panel.background=element_rect(color="black", fill="white"),
+        panel.border=element_blank(),
+        axis.text.y=element_text(size=10, color="black"),
+        axis.title.y=element_text(size=10, color="black"),
+        axis.line.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(size=10, angle=45,
+                                 hjust=0.95, color='black'))
+ggsave("RelativeYieldTotalLam.png", width=7, height=3.5, units="in", path="/Users/junge037/Documents/Projects/legume_intercrop/figures")
+#Plot Relative yields IWG GRAIN
+legry3<-summarySE(legry, "g_ry", c("fYear", "Location", "Trt_code"), na.rm=T)
+pps = position_dodge(width = .75)
+nolegs<-c("Control","45", "90")
+ggplot(data=subset(legry3, Trt_code!="Control"&Trt_code!="45"&Trt_code!="90"), 
+       aes(x=Trt_code, y=g_ry)) + 
+  geom_point(size=1.5)+#, stat="identity", position = pps) + 
+  facet_grid(Location~fYear) +
+  geom_hline(yintercept = 1, color="black")+
+  geom_errorbar(aes(ymin=g_ry-se, ymax=g_ry+se), width=0.2, position = pps) +
+  xlab("Treatment") +
+  ylab("Relative Yield")+
+  ylim(0,4) +
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        strip.text.y = element_text(size=10),
+        strip.background =element_rect(color="black", fill="white"),
+        panel.background=element_rect(color="black", fill="white"),
+        panel.border=element_blank(),
+        axis.text.y=element_text(size=10, color="black"),
+        axis.title.y=element_text(size=10, color="black"),
+        axis.line.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(size=10, angle=45,
+                                 hjust=0.95, color='black'))
+ggsave("RelativeYieldGrain.png", width=9, height=6, units="in", path="/Users/junge037/Documents/Projects/legume_intercrop/figures")
+#Plot relative yields grain by site
+ggplot(data=subset(legry3, Trt_code!="Control"&Trt_code!="45"&Trt_code!="90"&Location=="Lamberton"), 
+       aes(x=Trt_code, y=g_ry)) + 
+  geom_point(size=1.5)+#, stat="identity", position = pps) + 
+  facet_grid(~fYear) +
+  geom_hline(yintercept = 1, color="black")+
+  geom_errorbar(aes(ymin=g_ry-se, ymax=g_ry+se), width=0.2, position = pps) +
+  xlab("Treatment") +
+  ylab("Relative Yield")+
+  ylim(0,3.5) +
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        strip.text.y = element_text(size=10),
+        strip.background =element_rect(color="black", fill="white"),
+        panel.background=element_rect(color="black", fill="white"),
+        panel.border=element_blank(),
+        axis.text.y=element_text(size=10, color="black"),
+        axis.title.y=element_text(size=10, color="black"),
+        axis.line.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(size=10, angle=45,
+                                 hjust=0.95, color='black'))
+ggsave("RelativeYieldGrainLam.png", width=7, height=3.5, units="in", path="/Users/junge037/Documents/Projects/legume_intercrop/figures")
+#Plot HI at Lamberton
+legry4<-summarySE(legry, "HI", c("fYear", "Location", "Trt_code"), na.rm=T)
+ggplot(data=subset(legry4, Location=="Lamberton"), 
+       aes(x=Trt_code, y=HI)) + 
+  geom_point(size=1.5)+#, stat="identity", position = pps) + 
+  facet_grid(~fYear) +
+  #geom_hline(yintercept = 1, color="black")+
+  geom_errorbar(aes(ymin=HI-se, ymax=HI+se), width=0.2, position = pps) +
+  xlab("Treatment") +
+  ylab("Harvest index")+
+  #ylim(0,3.5) +
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        strip.text.y = element_text(size=10),
+        strip.background =element_rect(color="black", fill="white"),
+        panel.background=element_rect(color="black", fill="white"),
+        panel.border=element_blank(),
+        axis.text.y=element_text(size=10, color="black"),
+        axis.title.y=element_text(size=10, color="black"),
+        axis.line.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(size=10, angle=45,
+                                 hjust=0.95, color='black'))
+#Plot legume biomass and relative yield
+ggplot(data=subset(legry, Trt_code!="Control"&Trt_code!="45"&Trt_code!="90"&Location=="Lamberton"),
+       aes(x=Leg.bio.kg.ha, y=g_ry))+
+  geom_point(aes(color=Trt_code))+
+  facet_grid(~fYear)+
+  xlab("Legume biomass (kg/ha)") +
+  ylab("Relative grain yield")+
+  geom_hline(yintercept = 1, color="black")+
+  geom_smooth(method='lm', formula=y ~ poly(x, 2), se=F)+
+  ylim(0,3.5) +
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        strip.text.y = element_text(size=10),
+        strip.background =element_rect(color="black", fill="white"),
+        panel.background=element_rect(color="black", fill="white"),
+        panel.border=element_blank(),
+        legend.key = element_rect(colour = "transparent", fill = NA),
+        legend.text=element_text(size=10),
+        legend.key.size = unit(6,"mm"),
+        legend.position="none",
+        legend.title=element_blank(),
+        axis.text.y=element_text(size=10, color="black"),
+        axis.title.y=element_text(size=10, color="black"),
+        axis.line.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(size=10, angle=45,
+                                 hjust=0.95, color='black'))
+ggsave("LegumeBiomassRelativeGrainLam.png", width=7, height=3.5, units="in", path="/Users/junge037/Documents/Projects/legume_intercrop/figures")
+
+#Plot 2017 legume biomass on 2019 relative yield
+lagr<-summarySE(subset(LEG, fYear=="2017"), "Leg.bio.kg.ha", c("Location", "fRep", "Trt_code"), na.rm=TRUE)
+lagr$g_ry<-subset(legry, fYear=="2019")$g_ry
+#regmod2<-lme(g_ry~Leg.bio.kg.ha,random = ~1|Location/fRep/Trt_code, na.action=na.omit, data=lagr)
+regmod2<-lme(g_ry~Leg.bio.kg.ha,random = ~1|fRep, na.action=na.omit, data=subset(lagr, Location=="Lamberton"))
+anova(regmod2)
+summary(regmod2)
+plot(regmod2)
+r.squaredGLMM(regmod2)
+summary(lm(g_ry~Leg.bio.kg.ha, na.action=na.omit, data=subset(lagr, Location=="Lamberton")))
+
+ggplot(data=lagr, aes(x=Leg.bio.kg.ha, y=g_ry)) + 
+  geom_point(size=1.5)+
+  #facet_grid(~fYear) +
+  geom_smooth(se=F, method="lm", color="black")+
+  geom_hline(yintercept=1, linetype=2)+
+  #ylim(c(0,900))+
+  #ylab(expression("Grain yield " ~ (kg ~ ha^{-1})))+ 
+  ylab("Relative grain yield")+
+  xlab(expression("Legume biomass " ~ (kg ~ ha^{-1})))+ 
+  coord_cartesian(ylim=c(0,5.5))+
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        strip.text.y = element_text(size=10),
+        strip.background =element_rect(color="black", fill="white"),
+        panel.background=element_rect(color="black", fill="white"),
+        panel.border=element_blank(),
+        axis.text.y=element_text(size=10, color="black"),
+        axis.title.y=element_text(size=10, color="black"),
+        axis.line.x = element_blank(),
+        axis.text.x=element_text(size=10, color='black'))
+ggsave("LegumeBiomassRelativeYieldLam.png", width=3.5, height=3.5, units="in", path="/Users/junge037/Documents/Projects/legume_intercrop/figures/")
+
+#Correlations between legume biomass, relative grain yield, relative total yield, weeds, N transfer
+cordat<-subset(legry, fYear=="2017")[,c(8,15:18)]
+names(cordat)<-c("Legume biomass", "RY grain", "RY total", "Weeds", "N transfer")
+pcor<-round(cor(cordat, use = "na.or.complete"),2)
+get_lower_tri<-function(cormat){
+  cormat[upper.tri(cormat)] <- NA
+  return(cormat)
+}
+# Get upper triangle of the correlation matrix
+get_upper_tri <- function(cormat){
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
+}
+upper_tri <- get_upper_tri(pcor)
+library(reshape2)
+mpcor<-melt(upper_tri)
+library(ggplot2)
+ggplot(data = mpcor, aes(Var2, Var1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "red", high = "green", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson Correlation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   hjust = 1))+
+  coord_fixed()+
+  ggtitle("A")+
+  geom_text(aes(Var2, Var1, label = value), color = "black", size = 5) +
+  theme(
+    plot.title=element_text(size=14,face='bold', hjust=.02),
+    axis.title.x = element_blank(),
+    axis.text=element_text(color="black", size=14),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    legend.background = element_rect(color="white"),
+    legend.text=element_text(size=14),
+    legend.position=c(0.2,0.8),
+    legend.title=element_text(size=14),
+    axis.ticks = element_blank())
 
 ####Within-year correlations ####
 #2017
@@ -582,8 +825,8 @@ NTmodL1<-lme(NTrans ~ (Trt_code-1) * fStandAge, data = subset(LEG, Location=="La
 anova(NTmodL1)
 summary(NTmodL1)
 
-anova(lme(NTrans ~ (Trt_code-1), data = subset(LEG, fYear=="2017"&Location=="Lamberton"&Legume=="1"), random = ~1|fRep, na.action = na.omit))
-summary(lme(NTrans ~ (Trt_code-1), data = subset(LEG, fYear=="2017"&Location=="Lamberton"&Legume=="1"), random = ~1|fRep, na.action = na.omit))
+anova(lme(NTrans ~ (Trt_code-1), data = subset(LEG, fYear=="2019"&Location=="Lamberton"&Legume=="1"), random = ~1|fRep, na.action = na.omit))
+summary(lme(NTrans ~ (Trt_code-1), data = subset(LEG, fYear=="2019"&Location=="Lamberton"&Legume=="1"), random = ~1|fRep, na.action = na.omit))
 
 #Saint Paul
 NTmod4<-lm(NTrans ~ Trt_code * fStandAge, data = subset(LEG, Location=="Saint Paul"&Legume=="1"), na.action = na.omit)
@@ -675,6 +918,42 @@ ggplot(data=sumNT3, aes(x=Trt_code, y=NTrans*100)) +
                                  hjust=0.95, color='black'))
 ggsave("Figure5v2.png", width=16.5, height=8.5, units="cm", path="/Volumes/GoogleDrive/My Drive/Mac/Students/Evelyn_Reiley/Legume_MS/")
 
+
+#All years at lam,
+sumNT4<-sumNT2
+#manually indicate which means are different from 0. Use models above
+sumNT4$zdif<-NA
+sumNT4$zdif[c(4,7,12,25,39,40,43)]<-"*"
+sumNT4$Env<-paste0(sumNT4$Location,":",sumNT4$fYear)
+sumNT4<-subset(sumNT4, Env=="Lamberton:2017"|Env=="Lamberton:2018"|Env=="Lamberton:2019")
+sumNT4$Env<-factor(sumNT4$Env, levels=c("Lamberton:2017", "Lamberton:2018", "Lamberton:2019"))
+
+ggplot(data=sumNT4, aes(x=Trt_code, y=NTrans*100)) + 
+  geom_point(size=1.5)+#, stat="identity", position = pps) + 
+  facet_grid(~Env) +
+  geom_hline(yintercept = 0, color="black")+
+  geom_errorbar(aes(ymin=NTrans*100-se*100, ymax=NTrans*100+se*100), width=0.2, position = pps) +
+  xlab("Treatment") +
+  ylab("N transfer (%)")+
+  #ylim(0,750) +
+  coord_cartesian(ylim=c(-75,75))+
+  scale_y_continuous(breaks=c(-75, -50, -25, 0, 25, 50, 75))+
+  geom_text(aes(x=Trt_code, y=NTrans*100+se*100+10, label=zdif), 
+            show.legend = F, size=7, color="black", position = position_dodge(1),
+            hjust="center")+
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        strip.text.y = element_text(size=10),
+        strip.background =element_rect(color="black", fill="white"),
+        panel.background=element_rect(color="black", fill="white"),
+        panel.border=element_blank(),
+        axis.text.y=element_text(size=10, color="black"),
+        axis.title.y=element_text(size=10, color="black"),
+        axis.line.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(size=10, angle=45,
+                                 hjust=0.95, color='black'))
+ggsave("NtransferLam.png", width=7, height=3.5, units="in", path="/Users/junge037/Documents/Projects/legume_intercrop/figures")
 
 ###Difference in 15N IWG - 15N Legume####
 #Rosemount
